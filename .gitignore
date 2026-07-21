@@ -1,0 +1,3 @@
+server/.venv
+server/chroma_data/
+**/__pycache__/
