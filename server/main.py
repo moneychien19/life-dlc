@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from services.vector_store import collection
 from services.ingestion import ingest_document
 from services.llm import generate_answer
@@ -36,3 +36,24 @@ async def chat(request: ChatRequest):
 
   answer = generate_answer(request.question, sources)
   return ChatResponse(answer=answer, sources=sources)
+
+@app.get("/documents")
+async def list_documents():
+  docs = collection.get(include=["metadatas"])
+  counts = {}
+  for meta in docs["metadatas"]:
+    counts[meta["doc_id"]] = counts.get(meta["doc_id"], 0) + 1
+  
+  return {
+    "documents": [
+      {"doc_id": doc_id, "chunks": n} for doc_id, n in counts.items()
+    ]
+  }
+
+@app.delete("/documents/{doc_id}")
+async def delete_document(doc_id: str):
+  existing = collection.get(where={"doc_id": doc_id}, include=[])
+  if not existing["ids"]:
+    raise HTTPException(status_code=404, detail=f"No document '{doc_id}'")
+  collection.delete(where={"doc_id": doc_id})
+  return {"status": "deleted", "doc_id": doc_id, "chunks_removed": len(existing["ids"])}
