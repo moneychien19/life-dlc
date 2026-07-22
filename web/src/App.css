@@ -189,53 +189,6 @@
   border-top: 1px solid var(--hairline);
 }
 
-/* chat-composer: gray square textarea, wraps + auto-grows, blue focus underline */
-.chat-composer {
-  flex: 1 1 auto;
-  min-width: 0;
-  background: var(--surface-1);
-  color: var(--ink);
-  border: none;
-  border-bottom: 1px solid var(--hairline-strong);
-  padding: 11px var(--md);
-  font-family: inherit;
-  font-size: 16px;
-  line-height: 1.5;
-  letter-spacing: 0.16px;
-  outline: none;
-  resize: none;
-  overflow-y: auto;
-  max-height: 160px; /* matches the JS cap; scrolls beyond */
-}
-.chat-composer:focus {
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 10px; /* keep total height stable when border thickens */
-}
-.chat-composer:disabled {
-  color: var(--ink-subtle);
-}
-
-/* chat-send: blue square button */
-.chat-send {
-  flex: 0 0 auto;
-  background: var(--primary);
-  color: var(--on-primary);
-  border: none;
-  padding: 12px var(--md);
-  font-size: 14px;
-  letter-spacing: 0.16px;
-  cursor: pointer;
-  min-width: 64px;
-}
-.chat-send:hover:not(:disabled) {
-  background: var(--blue-hover);
-}
-.chat-send:disabled {
-  background: var(--surface-2, #e0e0e0);
-  color: var(--ink-subtle);
-  cursor: not-allowed;
-}
-
 /* Responsive: full-bleed column and larger tap targets on phones */
 @media (max-width: 720px) {
   .app {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { askQuestion } from "./api";
 import "./App.css";
+import { Button, TextArea } from "./components";
 
 // Render inline citation markers like [1] in the brand accent color.
 function AnswerText({ text }) {
@@ -14,7 +15,7 @@ function AnswerText({ text }) {
           </span>
         ) : (
           part
-        )
+        ),
       )}
     </p>
   );
@@ -113,7 +114,7 @@ export default function App() {
                 <Sources sources={m.sources} />
               </div>
             </div>
-          )
+          ),
         )}
 
         {loading && (
@@ -132,20 +133,17 @@ export default function App() {
       {error && <div className="error-banner">{error}</div>}
 
       <form className="composer" onSubmit={handleSubmit}>
-        <textarea
+        <TextArea
           ref={inputRef}
-          className="chat-composer"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="e.g. Is dental cleaning covered?"
-          rows={1}
           disabled={loading}
-          autoFocus
         />
-        <button className="chat-send" type="submit" disabled={loading || !question.trim()}>
+        <Button type="submit" disabled={loading || !question.trim()}>
           {loading ? "…" : "Ask"}
-        </button>
+        </Button>
       </form>
     </div>
   );
