@@ -36,7 +36,7 @@ const StyledTextArea = styled.textarea`
   letter-spacing: 0.16px;
   outline: none;
   resize: none;
-  overflow-y: auto;
+  overflow-y: hidden;
   max-height: 160px;
 
   &:focus {

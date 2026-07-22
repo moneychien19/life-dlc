@@ -1,162 +1,37 @@
-import { useEffect, useRef, useState } from "react";
-import { askQuestion } from "./api";
-import "./App.css";
-import { Button, TextArea } from "./components";
-
-// Render inline citation markers like [1] in the brand accent color.
-function AnswerText({ text }) {
-  const parts = text.split(/(\[\d+\])/g);
-  return (
-    <p className="answer">
-      {parts.map((part, i) =>
-        /^\[\d+\]$/.test(part) ? (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static split of one string; never reorders
-          <span key={i} className="cite">
-            {part}
-          </span>
-        ) : (
-          part
-        ),
-      )}
-    </p>
-  );
-}
-
-function Sources({ sources }) {
-  if (!sources || sources.length === 0) return null;
-  return (
-    <ul className="sources">
-      {sources.map((s, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: fixed list per message; never reorders
-        <li key={i} className="source-tile">
-          <div className="source-head">
-            <span className="cite">[{i + 1}]</span>
-            <span className="source-doc">{s.doc}</span>
-            <span className="source-score">score {s.score}</span>
-          </div>
-          <p className="source-chunk">{s.chunk}</p>
-        </li>
-      ))}
-    </ul>
-  );
-}
+import styled from "@emotion/styled";
+import { Chat } from "./pages/chat";
 
 export default function App() {
-  const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const logRef = useRef(null);
-  const inputRef = useRef(null);
-
-  // Keep the newest message in view.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are intentional re-run triggers (scroll on new message / loading)
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [messages, loading]);
-
-  // Auto-grow the textarea to fit its content (capped, then scrolls).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional re-run trigger (resize as the question text changes)
-  useEffect(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
-  }, [question]);
-
-  function handleKeyDown(e) {
-    // Enter submits; Shift+Enter makes a newline. Ignore Enter mid-IME-composition.
-    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const q = question.trim();
-    if (!q || loading) return;
-
-    setError("");
-    setLoading(true);
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: "user", text: q },
-    ]);
-    setQuestion("");
-
-    try {
-      const data = await askQuestion(q);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          text: data.answer,
-          sources: data.sources,
-        },
-      ]);
-    } catch (err) {
-      setError(err.message || "Something went wrong. Is the server running?");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div className="app">
-      <header className="app-header">Life DLC — Chat</header>
-
-      <main className="chat-log" ref={logRef}>
-        {messages.length === 0 && !loading && (
-          <div className="empty-state">
-            Ask a question about your uploaded documents.
-          </div>
-        )}
-
-        {messages.map((m) =>
-          m.role === "user" ? (
-            <div key={m.id} className="row row-user">
-              <div className="message-user">{m.text}</div>
-            </div>
-          ) : (
-            <div key={m.id} className="row row-assistant">
-              <div className="message-assistant">
-                <AnswerText text={m.text} />
-                <Sources sources={m.sources} />
-              </div>
-            </div>
-          ),
-        )}
-
-        {loading && (
-          <div className="row row-assistant">
-            <div className="message-assistant">
-              <span className="dots" role="status" aria-label="Thinking">
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      <form className="composer" onSubmit={handleSubmit}>
-        <TextArea
-          ref={inputRef}
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="e.g. Is dental cleaning covered?"
-          disabled={loading}
-        />
-        <Button type="submit" disabled={loading || !question.trim()}>
-          {loading ? "…" : "Ask"}
-        </Button>
-      </form>
-    </div>
+    <StyledApp>
+      <StyledHeader>Life DLC — Chat</StyledHeader>
+      <Chat />
+    </StyledApp>
   );
 }
+
+const StyledApp = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--canvas);
+  border-inline: 1px solid var(--hairline);
+
+  @media (max-width: 720px) {
+    border-inline: none;
+  }
+`;
+const StyledHeader = styled.header`
+  flex: 0 0 auto;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--md);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.16px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--hairline);
+`;
