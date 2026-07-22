@@ -1,18 +1,42 @@
 import styled from "@emotion/styled";
 
+// Render the chunk, highlighting the verified supporting quote if present.
+const Chunk = ({ chunk, quote }) => {
+  if (!quote || !chunk.includes(quote)) {
+    return <StyledScoreChunk>{chunk}</StyledScoreChunk>;
+  }
+  const start = chunk.indexOf(quote);
+  const before = chunk.slice(0, start);
+  const after = chunk.slice(start + quote.length);
+  return (
+    <StyledScoreChunk>
+      {before}
+      <StyledMark>{quote}</StyledMark>
+      {after}
+    </StyledScoreChunk>
+  );
+};
+
 export const Sources = ({ sources }) => {
   if (!sources || sources.length === 0) return null;
+
+  // Only show sources the answer actually cited, keeping their original number.
+  const cited = sources
+    .map((source, i) => ({ source, num: i + 1 }))
+    .filter(({ source }) => source.cited);
+
+  if (cited.length === 0) return null;
+
   return (
     <StyledSourcesBlock>
-      {sources.map((s, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: fixed list per message; never reorders
-        <StyledTitle key={i}>
+      {cited.map(({ source, num }) => (
+        <StyledTitle key={num}>
           <StyledSourceHead>
-            <StyledCite>[{i + 1}]</StyledCite>
-            <StyledDoc>{s.doc}</StyledDoc>
-            <StyledScore>score {s.score}</StyledScore>
+            <StyledCite>[{num}]</StyledCite>
+            <StyledDoc>{source.doc}</StyledDoc>
+            <StyledScore>score {source.score}</StyledScore>
           </StyledSourceHead>
-          <StyledScoreChunk>{s.chunk}</StyledScoreChunk>
+          <Chunk chunk={source.chunk} quote={source.quote} />
         </StyledTitle>
       ))}
     </StyledSourcesBlock>
@@ -62,4 +86,10 @@ const StyledScoreChunk = styled.p`
   line-height: 1.4;
   letter-spacing: 0.16px;
   color: var(--ink-muted);
+`;
+// The verified supporting sentence — a restrained blue-tint highlight.
+const StyledMark = styled.mark`
+  background: rgba(15, 98, 254, 0.12);
+  color: var(--ink);
+  padding: 0 2px;
 `;
