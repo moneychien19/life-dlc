@@ -1,10 +1,19 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from services.vector_store import collection
 from services.ingestion import ingest_document
 from services.llm import generate_answer
 from schemas import ChatRequest, ChatResponse, Source
 
 app = FastAPI()
+
+# Allow the React dev server (Vite) to call the API from a different origin.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
