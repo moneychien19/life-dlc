@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { askQuestion } from "./api";
 import "./App.css";
 import { Button, TextArea } from "./components";
@@ -10,6 +10,7 @@ function AnswerText({ text }) {
     <p className="answer">
       {parts.map((part, i) =>
         /^\[\d+\]$/.test(part) ? (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static split of one string; never reorders
           <span key={i} className="cite">
             {part}
           </span>
@@ -26,6 +27,7 @@ function Sources({ sources }) {
   return (
     <ul className="sources">
       {sources.map((s, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: fixed list per message; never reorders
         <li key={i} className="source-tile">
           <div className="source-head">
             <span className="cite">[{i + 1}]</span>
@@ -48,16 +50,18 @@ export default function App() {
   const inputRef = useRef(null);
 
   // Keep the newest message in view.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are intentional re-run triggers (scroll on new message / loading)
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [messages, loading]);
 
   // Auto-grow the textarea to fit its content (capped, then scrolls).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional re-run trigger (resize as the question text changes)
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 160) + "px";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [question]);
 
   function handleKeyDown(e) {
@@ -75,14 +79,22 @@ export default function App() {
 
     setError("");
     setLoading(true);
-    setMessages((prev) => [...prev, { role: "user", text: q }]);
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role: "user", text: q },
+    ]);
     setQuestion("");
 
     try {
       const data = await askQuestion(q);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: data.answer, sources: data.sources },
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: data.answer,
+          sources: data.sources,
+        },
       ]);
     } catch (err) {
       setError(err.message || "Something went wrong. Is the server running?");
@@ -102,13 +114,13 @@ export default function App() {
           </div>
         )}
 
-        {messages.map((m, i) =>
+        {messages.map((m) =>
           m.role === "user" ? (
-            <div key={i} className="row row-user">
+            <div key={m.id} className="row row-user">
               <div className="message-user">{m.text}</div>
             </div>
           ) : (
-            <div key={i} className="row row-assistant">
+            <div key={m.id} className="row row-assistant">
               <div className="message-assistant">
                 <AnswerText text={m.text} />
                 <Sources sources={m.sources} />
@@ -120,7 +132,7 @@ export default function App() {
         {loading && (
           <div className="row row-assistant">
             <div className="message-assistant">
-              <span className="dots" aria-label="Thinking">
+              <span className="dots" role="status" aria-label="Thinking">
                 <span></span>
                 <span></span>
                 <span></span>
